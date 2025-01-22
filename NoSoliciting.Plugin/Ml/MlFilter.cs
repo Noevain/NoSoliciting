@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -142,8 +143,8 @@ namespace NoSoliciting.Ml {
         private static async Task<byte[]?> DownloadModel(Uri url) {
             try {
                 Plugin.Log.Info("Downloading model from {0}", url);
-                using var client = new WebClient();
-                var data = await client.DownloadDataTaskAsync(url);
+                using var client = new HttpClient();
+                var data = await client.GetByteArrayAsync(url);
                 return data;
             } catch (WebException e) {
                 Plugin.Log.Error("Could not download newest model.");
@@ -170,8 +171,8 @@ namespace NoSoliciting.Ml {
 
         private static async Task<(Manifest manifest, string source)?> DownloadManifest() {
             try {
-                using var client = new WebClient();
-                var data = await client.DownloadStringTaskAsync(Url);
+                using var client = new HttpClient();
+                var data = await client.GetStringAsync(Url);
                 LastError = null;
                 return (LoadYaml<Manifest>(data), data);
             } catch (Exception e) when (e is WebException or YamlException) {

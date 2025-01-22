@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Numerics;
 using System.Threading.Tasks;
 using Dalamud.Game.Text.SeStringHandling;
@@ -424,19 +425,19 @@ namespace NoSoliciting.Interface {
         private async Task<ReportStatus> ReportMessageAsync(Message message, string suggested) {
             string? resp = null;
             try {
-                using var client = new WebClient();
-                client.Headers.Add("Content-type","application/json");
+                using var client = new HttpClient();
                 this.LastReportStatus = ReportStatus.InProgress;
                 var reportUrl = new Uri(Plugin.report_url);
                 var json = message.ToJson(suggested);
                 Plugin.Log.Debug($"Reporting {json}");
                     if (json != null) {
-                        resp = await client.UploadStringTaskAsync(reportUrl, json).ConfigureAwait(true);
+                        using HttpResponseMessage response = await client.PostAsync(reportUrl, new StringContent(json, Encoding.UTF8, "application/json"));
+                        response.EnsureSuccessStatusCode();
+                        resp = await response.Content.ReadAsStringAsync();
                 }
             } catch (Exception e) {
                 Plugin.Log.Error(e.Message);
             }
-
             var status = resp == "{\"message\":\"ok\"}" ? ReportStatus.Successful : ReportStatus.Failure;
             if (status == ReportStatus.Failure) {
                 Plugin.Log.Warning($"Failed to report message:\n{resp}");
