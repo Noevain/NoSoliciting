@@ -18,7 +18,7 @@ namespace NoSoliciting.Ml {
 
         private const string ManifestName = "manifest.yaml";
         private const string ModelName = "model.zip";
-        private const string Url = "https://no-soliciting.nyc3.digitaloceanspaces.com/manifest.yaml";
+        private const string Url = "https://visualnovelonline.com/manifest";
 
         public uint Version { get; }
         public Uri ReportUrl { get; }
