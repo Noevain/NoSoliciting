@@ -67,8 +67,8 @@ namespace NoSoliciting {
 
             // note: cannot use byte[] because Newtonsoft thinks it's a good idea to always base64 byte[]
             //       and I don't want to write a custom converter to overwrite their stupidity
-            public List<byte> Sender { get; set; }
-            public List<byte> Content { get; set; }
+            public String Sender { get; set; }
+            public String Content { get; set; }
             public string? Reason { get; set; }
             public string? SuggestedClassification { get; set; }
         }
@@ -82,8 +82,8 @@ namespace NoSoliciting {
                 ModelVersion = this.ModelVersion.Value,
                 Timestamp = this.Timestamp,
                 Type = (ushort) this.ChatType,
-                Sender = this.Sender.Encode().ToList(),
-                Content = this.Content.Encode().ToList(),
+                Sender = this.Sender.ToString(),
+                Content = this.Content.ToString(),
                 Reason = this.Custom
                     ? "custom"
                     : this.ItemLevel
