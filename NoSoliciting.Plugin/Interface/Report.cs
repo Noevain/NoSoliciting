@@ -6,9 +6,9 @@ using System.Net.Http;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using ImGuiNET;
 using NoSoliciting.Ml;
 using NoSoliciting.Resources;
 

@@ -4,7 +4,7 @@ using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 using Dalamud.Interface;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using NoSoliciting.Ml;
 using NoSoliciting.Resources;
 
@@ -209,7 +209,7 @@ namespace NoSoliciting.Interface {
 
             labelBytes[unterminatedLabelBytes.Length] = 0;
 
-            var num2 = (int) ImGuiNative.igBeginTabItem(labelBytes, null, flags);
+            var num2 = (int) ImGuiNative.BeginTabItem(labelBytes, null, flags);
             return (uint) num2 > 0U;
         }
 
