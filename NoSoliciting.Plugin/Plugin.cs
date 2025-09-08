@@ -44,6 +44,10 @@ namespace NoSoliciting {
 
         [PluginService]
         internal IToastGui ToastGui { get; init; } = null!;
+        
+        [PluginService]
+        
+        internal IGameInteropProvider GameInteropProvider { get; init; } = null!;
 
         internal PluginConfiguration Config { get; }
         internal PluginUi Ui { get; }
@@ -68,7 +72,7 @@ namespace NoSoliciting {
         public string AssemblyLocation { get; private set; } = Assembly.GetExecutingAssembly().Location;
 
         public Plugin(IPluginLog log, IDalamudPluginInterface @interface, IClientState clientState, IChatGui chatGui, 
-            IPartyFinderGui partyFinderGui, IDataManager dataManager, ICommandManager commandManager, IToastGui toastGui)
+            IPartyFinderGui partyFinderGui, IDataManager dataManager, ICommandManager commandManager, IToastGui toastGui,IGameInteropProvider gameInteropProvider)
         {
             Log = log;
             Interface = @interface;
@@ -78,6 +82,7 @@ namespace NoSoliciting {
             DataManager = dataManager;
             CommandManager = commandManager;
             ToastGui = toastGui;
+            GameInteropProvider = gameInteropProvider;
 
             string path = Environment.GetEnvironmentVariable("PATH")!;
             string newPath = Path.GetDirectoryName(this.AssemblyLocation)!;

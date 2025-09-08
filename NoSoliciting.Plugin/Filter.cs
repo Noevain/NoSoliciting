@@ -2,6 +2,9 @@
 using Dalamud.Game.Gui.PartyFinder.Types;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Hooking;
+using FFXIVClientStructs.FFXIV.Client.System.String;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using NoSoliciting.Interface;
 using NoSoliciting.Ml;
 
@@ -43,8 +46,19 @@ namespace NoSoliciting {
 
         private bool _disposedValue;
 
+        private bool _suppressNextBubble = false;
+        
+        private readonly Hook<RaptureLogModule.Delegates.ShowMiniTalkPlayer>? _showMiniTalkPlayerHook;
+
         public Filter(Plugin plugin) {
             this.Plugin = plugin ?? throw new ArgumentNullException(nameof(plugin), "Plugin cannot be null");
+            unsafe
+            {
+                _showMiniTalkPlayerHook = this.Plugin.GameInteropProvider.HookFromAddress<RaptureLogModule.Delegates.ShowMiniTalkPlayer>(
+                    RaptureLogModule.MemberFunctionPointers.ShowMiniTalkPlayer, OnBubble);
+                _showMiniTalkPlayerHook!.Enable();
+                
+            }
 
             this.Plugin.ChatGui.CheckMessageHandled += this.OnChat;
             this.Plugin.PartyFinderGui.ReceiveListing += this.OnListing;
@@ -58,6 +72,7 @@ namespace NoSoliciting {
             if (disposing) {
                 this.Plugin.ChatGui.CheckMessageHandled -= this.OnChat;
                 this.Plugin.PartyFinderGui.ReceiveListing -= this.OnListing;
+                this._showMiniTalkPlayerHook?.Dispose();
             }
 
             this._disposedValue = true;
@@ -71,6 +86,27 @@ namespace NoSoliciting {
 
         private void OnChat(XivChatType type, int senderId, ref SeString sender, ref SeString message, ref bool isHandled) {
             isHandled = isHandled || this.FilterMessage(type, senderId, sender, message);
+            //Chat bubbles are fired even if we set isHandled true,which causes the last chat message
+            //to be the bubble,so we need to suppress the next bubble call
+            //unless your chat is under super heavy load,there should not be a problem with this
+            if (isHandled)
+            {
+                _suppressNextBubble = true;
+            }
+        }
+
+        private unsafe void OnBubble(RaptureLogModule* rapture, ushort logKindId, Utf8String* sender, Utf8String*
+            message, ushort worldId, bool isLocalPlayer)
+        {
+            if (_suppressNextBubble)
+            {
+                _suppressNextBubble = false;
+            }
+            else
+            {
+                //don't need to check anything else, if user has bubbles off this hook is never called anyway
+                _showMiniTalkPlayerHook!.Original(rapture, logKindId, sender, message, worldId, isLocalPlayer);
+            }
         }
 
         private void OnListing(IPartyFinderListing listing, IPartyFinderListingEventArgs args) {
