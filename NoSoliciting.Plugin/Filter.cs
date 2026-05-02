@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using Dalamud.Game.Chat;
 using Dalamud.Game.Gui.PartyFinder.Types;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
@@ -84,12 +85,18 @@ namespace NoSoliciting {
             GC.SuppressFinalize(this);
         }
 
-        private void OnChat(XivChatType type, int senderId, ref SeString sender, ref SeString message, ref bool isHandled) {
-            isHandled = isHandled || this.FilterMessage(type, senderId, sender, message);
+        private void OnChat(IHandleableChatMessage message) {
+            if (message.IsHandled)
+                return;
+            else if (this.FilterMessage(message))
+            {
+                message.PreventOriginal();
+            }
+            
             //Chat bubbles are fired even if we set isHandled true,which causes the last chat message
             //to be the bubble,so we need to suppress the next bubble call
             //unless your chat is under super heavy load,there should not be a problem with this
-            if (isHandled)
+            if (message.IsHandled)
             {
                 _suppressNextBubble = true;
             }
@@ -146,16 +153,16 @@ namespace NoSoliciting {
             }
         }
 
-        private bool FilterMessage(XivChatType type, int senderId, SeString sender, SeString message) {
+        private bool FilterMessage(IHandleableChatMessage message) {
             if (message == null) {
                 throw new ArgumentNullException(nameof(message), "SeString cannot be null");
             }
 
-            return this.MlFilterMessage(type, senderId, sender, message);
+            return this.MlFilterMessage(message);
         }
 
-        private bool MlFilterMessage(XivChatType type, int senderId, SeString sender, SeString message) {
-            var chatType = ChatTypeExt.FromDalamud(type);
+        private bool MlFilterMessage(IHandleableChatMessage message) {
+            var chatType = ChatTypeExt.FromDalamud(message.LogKind);
 
             // NOTE: don't filter on user-controlled chat types here because custom filters are supposed to check all
             //       messages except battle messages
@@ -164,16 +171,16 @@ namespace NoSoliciting {
             }
             
             // don't filter own chat messages
-            var playerName = Plugin.ClientState.LocalPlayer?.Name.TextValue;
-            if (sender != null && 
-                !string.IsNullOrEmpty(sender.TextValue) && 
-                !string.IsNullOrEmpty(playerName) && 
-                sender.TextValue.Equals(playerName)) {
+            var playerName = Plugin.PlayerState.CharacterName;
+            if (message.Sender != null && 
+                !string.IsNullOrEmpty(message.Sender.TextValue) && 
+                !string.IsNullOrEmpty(playerName) &&
+                message.Sender.TextValue.Equals(playerName)) {
                 Plugin.Log.Verbose("Skip filtering own message for character: " + playerName);
                 return false;
             }
 
-            var text = message.TextValue;
+            var text = message.Message.TextValue;
 
             var custom = false;
             MessageCategory? classification = null;
@@ -199,10 +206,10 @@ namespace NoSoliciting {
 
             var history = new Message(
                 this.Plugin.MlFilter?.Version,
-                ChatTypeExt.FromDalamud(type),
-                (uint)senderId,
-                sender ?? SeString.Empty,
-                message,
+                ChatTypeExt.FromDalamud(message.LogKind),
+                // (uint)senderId, //TODO: messages don't provide that anymore, figure something out
+                message.Sender ?? SeString.Empty,
+                message.Message,
                 classification,
                 custom,
                 false,
