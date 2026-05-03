@@ -1,4 +1,5 @@
 ﻿using System;
+using Dalamud.Game.Chat;
 using Dalamud.Game.Gui.PartyFinder.Types;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
@@ -84,13 +85,15 @@ namespace NoSoliciting {
             GC.SuppressFinalize(this);
         }
 
-        private void OnChat(XivChatType type, int senderId, ref SeString sender, ref SeString message, ref bool isHandled) {
-            isHandled = isHandled || this.FilterMessage(type, senderId, sender, message);
+        private void OnChat(IHandleableChatMessage chatMessage) {
+            if (!chatMessage.IsHandled && this.FilterMessage(chatMessage.LogKind, chatMessage.Sender, chatMessage.Message)) {
+                chatMessage.PreventOriginal();
+            }
+
             //Chat bubbles are fired even if we set isHandled true,which causes the last chat message
             //to be the bubble,so we need to suppress the next bubble call
             //unless your chat is under super heavy load,there should not be a problem with this
-            if (isHandled)
-            {
+            if (chatMessage.IsHandled) {
                 _suppressNextBubble = true;
             }
         }
@@ -123,7 +126,6 @@ namespace NoSoliciting {
                 this.Plugin.AddPartyFinderHistory(new Message(
                     version,
                     ChatType.None,
-                    (uint)listing.ContentId,
                     listing.Name,
                     listing.Description,
                     category,
@@ -146,15 +148,15 @@ namespace NoSoliciting {
             }
         }
 
-        private bool FilterMessage(XivChatType type, int senderId, SeString sender, SeString message) {
+        private bool FilterMessage(XivChatType type, SeString sender, SeString message) {
             if (message == null) {
                 throw new ArgumentNullException(nameof(message), "SeString cannot be null");
             }
 
-            return this.MlFilterMessage(type, senderId, sender, message);
+            return this.MlFilterMessage(type, sender, message);
         }
 
-        private bool MlFilterMessage(XivChatType type, int senderId, SeString sender, SeString message) {
+        private bool MlFilterMessage(XivChatType type, SeString sender, SeString message) {
             var chatType = ChatTypeExt.FromDalamud(type);
 
             // NOTE: don't filter on user-controlled chat types here because custom filters are supposed to check all
@@ -162,12 +164,12 @@ namespace NoSoliciting {
             if (chatType.IsBattle()) {
                 return false;
             }
-            
+
             // don't filter own chat messages
-            var playerName = Plugin.ClientState.LocalPlayer?.Name.TextValue;
-            if (sender != null && 
-                !string.IsNullOrEmpty(sender.TextValue) && 
-                !string.IsNullOrEmpty(playerName) && 
+            var playerName = this.Plugin.PlayerState.CharacterName;
+            if (sender != null &&
+                !string.IsNullOrEmpty(sender.TextValue) &&
+                !string.IsNullOrEmpty(playerName) &&
                 sender.TextValue.Equals(playerName)) {
                 Plugin.Log.Verbose("Skip filtering own message for character: " + playerName);
                 return false;
@@ -200,7 +202,6 @@ namespace NoSoliciting {
             var history = new Message(
                 this.Plugin.MlFilter?.Version,
                 ChatTypeExt.FromDalamud(type),
-                (uint)senderId,
                 sender ?? SeString.Empty,
                 message,
                 classification,
