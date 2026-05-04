@@ -29,6 +29,8 @@ namespace NoSoliciting {
 
         [PluginService]
         internal IClientState ClientState { get; init; } = null!;
+        [PluginService]
+        internal IPlayerState PlayerState { get; init; } = null!;
 
         [PluginService]
         internal IChatGui ChatGui { get; init; } = null!;
@@ -71,12 +73,13 @@ namespace NoSoliciting {
         // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
         public string AssemblyLocation { get; private set; } = Assembly.GetExecutingAssembly().Location;
 
-        public Plugin(IPluginLog log, IDalamudPluginInterface @interface, IClientState clientState, IChatGui chatGui, 
+        public Plugin(IPluginLog log, IDalamudPluginInterface @interface, IClientState clientState, IPlayerState playerState, IChatGui chatGui, 
             IPartyFinderGui partyFinderGui, IDataManager dataManager, ICommandManager commandManager, IToastGui toastGui,IGameInteropProvider gameInteropProvider)
         {
             Log = log;
             Interface = @interface;
             ClientState = clientState;
+            PlayerState = playerState;
             ChatGui = chatGui;
             PartyFinderGui = partyFinderGui;
             DataManager = dataManager;

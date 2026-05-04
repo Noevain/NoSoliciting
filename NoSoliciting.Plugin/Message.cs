@@ -56,6 +56,21 @@ namespace NoSoliciting {
             this.EnabledSnapshot = enabledSnapshot;
         }
 
+        internal Message(uint? defsVersion, ChatType type, SeString sender, SeString content, MessageCategory? classification, bool custom, bool ilvl, IEnumerable<MessageCategory> enabledSnapshot)
+        {
+            this.Id = Guid.NewGuid();
+            this.ModelVersion = defsVersion;
+            this.Timestamp = DateTime.Now;
+            this.ChatType = type;
+            this.ActorId = 0;
+            this.Sender = sender;
+            this.Content = content;
+            this.Classification = classification;
+            this.Custom = custom;
+            this.ItemLevel = ilvl;
+            this.EnabledSnapshot = enabledSnapshot;
+        }
+
         [Serializable]
         [JsonObject(NamingStrategyType = typeof(SnakeCaseNamingStrategy))]
         private class JsonMessage {
