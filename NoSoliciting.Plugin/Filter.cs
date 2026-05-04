@@ -130,7 +130,6 @@ namespace NoSoliciting {
                 this.Plugin.AddPartyFinderHistory(new Message(
                     version,
                     ChatType.None,
-                    (uint)listing.ContentId,
                     listing.Name,
                     listing.Description,
                     category,

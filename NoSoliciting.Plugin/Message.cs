@@ -18,9 +18,6 @@ namespace NoSoliciting {
     public class Message {
         public Guid Id { get; }
 
-        [JsonIgnore]
-        public uint ActorId { get; }
-
         public uint? ModelVersion { get; }
         public DateTime Timestamp { get; }
         public ChatType ChatType { get; }
@@ -42,27 +39,11 @@ namespace NoSoliciting {
                 ? "ilvl"
                 : this.Classification?.Name();
 
-        internal Message(uint? defsVersion, ChatType type, uint actorId, SeString sender, SeString content, MessageCategory? classification, bool custom, bool ilvl, IEnumerable<MessageCategory> enabledSnapshot) {
+        internal Message(uint? defsVersion, ChatType type, SeString sender, SeString content, MessageCategory? classification, bool custom, bool ilvl, IEnumerable<MessageCategory> enabledSnapshot) {
             this.Id = Guid.NewGuid();
             this.ModelVersion = defsVersion;
             this.Timestamp = DateTime.Now;
             this.ChatType = type;
-            this.ActorId = actorId;
-            this.Sender = sender;
-            this.Content = content;
-            this.Classification = classification;
-            this.Custom = custom;
-            this.ItemLevel = ilvl;
-            this.EnabledSnapshot = enabledSnapshot;
-        }
-
-        internal Message(uint? defsVersion, ChatType type, SeString sender, SeString content, MessageCategory? classification, bool custom, bool ilvl, IEnumerable<MessageCategory> enabledSnapshot)
-        {
-            this.Id = Guid.NewGuid();
-            this.ModelVersion = defsVersion;
-            this.Timestamp = DateTime.Now;
-            this.ChatType = type;
-            this.ActorId = 0;
             this.Sender = sender;
             this.Content = content;
             this.Classification = classification;
